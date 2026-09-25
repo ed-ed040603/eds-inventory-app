@@ -371,7 +371,6 @@
   </main>
 
   <script>
-    // Na-butang na ang imong tinuod nga Supabase details dinhi:
     const SUPABASE_URL = 'https://ed-ed040603.supabase.co'; 
     const SUPABASE_KEY = 'sb_publishable_I8xtbTJ0-HJgF2X9fjDZTQ_lZG6ExUe'; 
 
@@ -440,7 +439,7 @@
         if (toast && toastMsg) {
           toastMsg.innerText = msg;
           toast.classList.remove('hidden');
-          setTimeout(() => toast.classList.add('hidden'), 3500);
+          setTimeout(() => toast.classList.add('hidden'), 4000);
         }
       },
 
@@ -473,16 +472,23 @@
             .select();
 
           if (error) {
-            this.showToast('⚠️ Naa nay parehas nga email o nasayop ang registration.');
+            console.error("Supabase Registration Error:", error);
+            this.showToast('❌ Error: ' + (error.message || JSON.stringify(error)));
             return;
           }
 
-          this.currentUser = data[0];
+          if (data && data.length > 0) {
+            this.currentUser = data[0];
+          } else {
+            this.currentUser = { name, email, role, location };
+          }
+
           sessionStorage.setItem('currentUser', JSON.stringify(this.currentUser));
           this.showToast(`✅ Rehistrado na isip ${role.toUpperCase()}`);
           this.navigateTo(role);
         } catch (err) {
-          this.showToast('❌ Server connection error.');
+          console.error("Catch Exception:", err);
+          this.showToast('❌ Server connection error: ' + err.message);
         }
       },
 
@@ -583,7 +589,7 @@
               <td class="p-3 font-semibold text-gray-800">${p.name}</td>
               <td class="p-3 text-gray-600">₱${p.price}.00</td>
               <td class="p-3"><span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold">${p.stock} left</span></td>
-              <td class="p-3 font-bold text-emerald-600">${p.sold} sold</td>
+              <td class="p-3 font-bold text-emerald-600">${p.sold || 0} sold</td>
               <td class="p-3 text-center">
                 <button type="button" onclick="window.app.workerAddSale(${p.id})" ${p.stock <= 0 ? 'disabled' : ''} class="bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow hover:bg-emerald-700 transition">
                   +1 Manual Sale
@@ -662,15 +668,16 @@
         if (ownerTable) {
           let grandSales = 0, grandItemsSold = 0, grandStock = 0;
           ownerTable.innerHTML = this.products.map(p => {
-            const revenue = p.sold * p.price;
+            const soldCount = p.sold || 0;
+            const revenue = soldCount * p.price;
             grandSales += revenue;
-            grandItemsSold += p.sold;
+            grandItemsSold += soldCount;
             grandStock += p.stock;
             return `
               <tr>
                 <td class="p-3 font-semibold text-gray-800">${p.name}</td>
                 <td class="p-3 text-gray-600">₱${p.price}.00</td>
-                <td class="p-3 font-bold text-indigo-600">${p.sold}</td>
+                <td class="p-3 font-bold text-indigo-600">${soldCount}</td>
                 <td class="p-3"><span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold">${p.stock}</span></td>
                 <td class="p-3 font-bold text-emerald-600">₱${revenue}.00</td>
                 <td class="p-3 text-center">
